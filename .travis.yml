@@ -1,0 +1,14 @@
+language: python
+python:
+ - "3.4"
+
+install:
+ - pip install -e .
+ - pip install pytest pytest-cov
+ - pip install flake8
+
+before_script:
+ - flake8 uniontypes
+
+script:
+ - py.test --doctest-modules --cov=uniontypes --cov-report=term-missing --cov-fail-under 100 -v uniontypes
