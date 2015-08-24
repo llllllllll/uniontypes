@@ -3,8 +3,11 @@ from multipledispatch import dispatch
 from toolz import memoize, curry
 
 
+__version__ = '0.1.0'
+
+
 @memoize
-def union(*types, _isoption=False):
+def _union(*types, _isoption=False):
     """Construct a disjoint-union type out of some types.
 
     Paramaters
@@ -21,10 +24,9 @@ def union(*types, _isoption=False):
     --------
     uniontype.option
     """
-    if len(types) < 2:
-        raise TypeError('union needs at least 2 types')
+    assert len(types) >= 2, 'union needs at least 2 types'
 
-    class Union(metaclass=UnionMeta):
+    class _InnerUnion(Union, metaclass=_InnerUnionMeta):
         """A union type.
         """
         def __str__(self):
@@ -34,25 +36,24 @@ def union(*types, _isoption=False):
             return '%s %r' % (type(self).__name__, self.unboxed)
 
     type_names = [getattr(type_, '__name__', str(type_)) for type_ in types]
-    Union.__doc__ = _union_docfmt.format(
+    _InnerUnion.__doc__ = _union_docfmt.format(
         newline_types='\n    '.join(type_names),
         or_=' or '.join(type_names),
     )
+
     if _isoption:
         type_ = types[0]
-        Union.__name__ = Union.__qualname__ = (
-            'Option[%s]' % getattr(type_, '__name__', type_)
-        )
+        name = 'Option[%s]' % getattr(type_, '__name__', type_)
     else:
-        Union.__name__ = Union.__qualname__ = (
-            'Union[%s]' % ', '.join(type_names)
-        )
+        name = 'Union[%s]' % ', '.join(type_names)
+
+    _InnerUnion.__name__ = _InnerUnion.__qualname__ = name
 
     dispatch_ns = {}
-    Union._types = typemap = {}
+    _InnerUnion._types = typemap = {}
 
     mkwrapper = _mkoption_wrapper if _isoption else _mkwrapper
-    for type_, wrapper in map(mkwrapper(Union), types):
+    for type_, wrapper in map(mkwrapper(_InnerUnion), types):
         typemap[type_] = wrapper
 
         def bind(wrapper=wrapper):
@@ -64,11 +65,35 @@ def union(*types, _isoption=False):
             return __new__
 
         __new__ = bind()
-    Union.__new__ = __new__
-    return Union
+    _InnerUnion.__new__ = __new__
+    return _InnerUnion
 
 
-def option(type_):
+class _UnionMeta(type):
+    def __getitem__(self, types):
+        return _union(*types)
+
+
+class Union(metaclass=_UnionMeta):
+    __doc__ = _union.__doc__
+
+    def __new__(cls, *args, **kwargs):
+        raise TypeError(
+            'Arguments are passed to {cls} through subscript notation,'
+            ' ex: {cls}[a, b]'.format(cls=cls.__name__),
+        )
+
+
+class _OptionMeta(_UnionMeta):
+    def __getitem__(self, type_):
+        nonetype = type(None)
+        u = _union(type_, nonetype, _isoption=True)
+        u._types[None] = u[nonetype]
+        u.nothing = u(None)
+        return u
+
+
+class Option(Union, metaclass=_OptionMeta):
     """Construct an option type over another type.
 
     Paramaters
@@ -85,11 +110,11 @@ def option(type_):
     --------
     uniontypes.union
     """
-    nonetype = type(None)
-    u = union(type_, nonetype, _isoption=True)
-    u._types[None] = u[nonetype]
-    u.nothing = u(None)
-    return u
+
+
+class _InnerUnionMeta(_UnionMeta):
+    def __getitem__(self, type_):
+        return self._types[type_]
 
 
 _union_docfmt = """A union type of:
@@ -113,7 +138,7 @@ unboxed : {or_}
 Examples
 --------
 Creating a union type
->>> u = union(list, tuple, str)
+>>> u = Union[list, tuple, str]
 >>> u
 <class 'uniontypes.Union[list, tuple, str]'>
 
@@ -146,11 +171,6 @@ See Also
 uniontypes.union
 uniontypes.option
 """
-
-
-class UnionMeta(type):
-    def __getitem__(self, type_):
-        return self._types[type_]
 
 
 @curry

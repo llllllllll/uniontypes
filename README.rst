@@ -17,7 +17,8 @@ Creating a union type
 ~~~~~~~~~~~~~~~~~~~~~
 .. code-block:: python
 
-   >>> u = union(list, tuple, str)
+   >>> from uniontypes import Union
+   >>> u = Union[list, tuple, str]
    >>> u
    <class 'uniontypes.Union[list, tuple, str]'>
 
@@ -58,7 +59,8 @@ Option Types
 ------------
 .. code-block:: python
 
-   >>> oint = option(int)
+   >>> from uniontypes import Option
+   >>> oint = Option[int]
    >>> oint
    <class 'uniontypes.Option[int]'>
    >>> oint(1)

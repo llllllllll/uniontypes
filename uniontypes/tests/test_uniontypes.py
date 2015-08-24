@@ -1,20 +1,22 @@
 import pytest
 
-from uniontypes import union
+from uniontypes import Union
 
 
 # doctest the generated docstring for uniontypes
-__test__ = {'test_docstring': union(list, tuple, str)}
+__test__ = {'test_docstring': Union[list, tuple, str]}
+
+
+def test_create_union_instance():
+    with pytest.raises(TypeError):
+        Union()
 
 
 def test_not_enough_args():
     with pytest.raises(TypeError):
-        union()
-
-    with pytest.raises(TypeError):
-        union(type)
+        Union[type]
 
 
 def test_union_str():
-    assert str(union(list, str)('test')) == 'Union[list, str][str] test'
-    assert str(union(list, str)([1, 2])) == 'Union[list, str][list] [1, 2]'
+    assert str(Union[list, str]('test')) == 'Union[list, str][str] test'
+    assert str(Union[list, str]([1, 2])) == 'Union[list, str][list] [1, 2]'

@@ -10,7 +10,7 @@ if 'upload' in sys.argv:
 
 setup(
     name='uniontypes',
-    version='0.0.1',
+    version='0.1.0',
     description='Union types for python',
     author='Joe Jevnik',
     author_email='joejev@gmail.com',
@@ -23,7 +23,6 @@ setup(
         'Natural Language :: English',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: Implementation :: CPython',
         'Operating System :: POSIX',
         'Topic :: Software Development',
     ],

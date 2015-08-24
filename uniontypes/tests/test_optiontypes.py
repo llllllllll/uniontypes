@@ -1,12 +1,12 @@
-from uniontypes import option
+from uniontypes import Option
 
 
 def test_option_name():
-    assert option(int).__name__ == 'Option[int]'
+    assert Option[int].__name__ == 'Option[int]'
 
 
 def test_nothing():
-    oint = option(int)
+    oint = Option[int]
     nothing = oint(None)
     assert nothing is oint(None) is oint.nothing
     assert str(nothing) == 'Nothing'
